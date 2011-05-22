@@ -15,8 +15,11 @@ var mpos;
 
 var interval = 1.0 / 30;
 
-var MAX_BUBBLES = 15;
+var MAX_BUBBLES = 12;
 var BUBBLE_GENERATION_PROB = 0.05;
+
+var MIN_RADIUS = 10;
+var MAX_RADIUS = 90;
 
 var clicked = false;
 
@@ -76,7 +79,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	
 	this.pop = function() {
 		this.state = 2;
-		this.counter = 30;
+		this.counter = 40;
 		this.isAlive = false;
 	}
 	
@@ -99,7 +102,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			c.lineWidth = 3;
 			
 			if(this.hover && this.invested>0) {
-				if(this.gains>this.invested) {
+				if(this.growth>0) {
 					c.strokeStyle='rgba(126, 252, 122, 0.75)';
 					c.fillStyle='rgba(126, 252, 122, 0.5)'					
 				} else {
@@ -113,6 +116,11 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			
 			strokeCirc(this.x, this.y, this.radius)
 			fillCirc(this.x, this.y, this.radius);
+			if(this.radius<MIN_RADIUS+5 || this.radius>MAX_RADIUS-5) {
+				c.strokeStyle='rgba(249, 56, 11, 0.75)';
+				c.lineWidth=1;
+				strokeCirc(this.x, this.y, this.radius+2);
+			}
 		
 			c.fillStyle = '#1E2B3F';
 			var nameDms = c.measureText(this.name);
@@ -245,6 +253,7 @@ function checkBubblesWithBullets() {
 				bubble.radius += 2;
 				bubble.invested++;
 				bubble.gains++;
+				bubble.growth += .005;
 				
 				bullets.splice(i, 1);
 			}
@@ -254,7 +263,7 @@ function checkBubblesWithBullets() {
 function checkBubbleSize() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
-		if(b.isAlive && (b.radius < 10 || b.radius > 90)) {
+		if(b.isAlive && (b.radius < MIN_RADIUS || b.radius > MAX_RADIUS)) {
 			cash -= b.gains;
 			b.pop();
 		} else if(!b.isAlive && b.counter==0) {
@@ -326,7 +335,7 @@ function hoverOnBubble() {
 function clickedOnBubble() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
-		if(b.collidesWithPoint(mpos)) {
+		if(b.invested>0 && b.collidesWithPoint(mpos)) {
 			bubbles.splice(i, 1);
 			cash += b.gains;		
 			return true;
@@ -352,18 +361,18 @@ function handleMove(e) {
 
 /* DRAW LOOP
 **************************************************************************************/
-function getLines(phrase, maxLength) {
+function getLines(phrase) {
 	var wa=phrase.split(" "),
 		phraseArray=[],
 		lastPhrase="",
-		l = maxLength,
+		l = 170,
 		measure=0;
 	for (var i=0;i<wa.length;i++) {
 		var w = wa[i];
 		measure = c.measureText(lastPhrase+w).width;
 		if (measure < l) {
 			lastPhrase+=(" "+w);
-		}else {
+		} else {
 			phraseArray.push(lastPhrase);
 			lastPhrase=w;
 		}
@@ -380,7 +389,7 @@ Number.prototype.formatMoney = function(c, d, t) {
 };
 function drawHeadlines() {
 	for(var i=0; i<newsStory.length; i++) {
-		c.fillText(newsStory[i],280,h-95+(20*i),100);
+		c.fillText(newsStory[i],280,h-95+(20*i));
 	}
 }
 function drawMoney() {
@@ -456,10 +465,9 @@ function maybePanic(){
 function panic(){
 	for(var i = 0; i < bubbles.length; i++){
 		var randy = Math.random();
-		if (randy < bubbles[i].panicchance){
-			/*bubbles.splice(i,1);
-			i--;*/
+		if (randy < bubbles[i].panicchance) {
 			bubbles[i].pop();
+			newsStory = getLines("Bubble panic in Valley!");
 		}
 	}
 }
@@ -526,7 +534,7 @@ function addBubble() {
 			b.name = data['name'];
 			b.permalink = data['permalink']
 			bubbles.push(b);
-		}
+		} 
 	});
 }
 
@@ -547,7 +555,7 @@ function addNewsStory(){
 		}
 		$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
 		function(data) {
-			newsStory = getLines(data['story'], 170);
+			newsStory = getLines(data['story']);
 			var val = data['value']/100;
 			if(good == 0){
 				val = -1*val;
@@ -566,7 +574,7 @@ window.addEventListener('load', function() {
 	game.addEventListener('mouseup', handleMouseUp);
 	game.addEventListener('mousemove', handleMove);
 	
-	setup(10);
+	setup(6);
 	
 	sprite1.src = "images/sprite1.png";
 	sprite2.src = "images/sprite2.png";
