@@ -5,6 +5,8 @@ var maxh = 420;
 var game;
 var c;
 
+var gameStarted = false;
+
 var bubbles = [];
 var bullets = [];
 var turret;
@@ -123,7 +125,6 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			}
 		
 			c.fillStyle = '#1E2B3F';
-			var nameDms = c.measureText(this.name);
 			if(this.invested>0) {
 				if(this.gains > this.invested) {
 					var gainText = '$'+((this.gains-this.invested)*100000).formatMoney(0, '.', ',');
@@ -131,9 +132,19 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 					var gainText = '-$'+((this.invested-this.gains)*100000).formatMoney(0, '.', ',');
 				}
 				var gainDms = c.measureText(gainText);
-				c.fillText(gainText, this.x-(gainDms.width/2), this.y+16);
+				c.fillText(gainText, this.x-(gainDms.width/2), this.y+20);
+
+				if(this.hover) {
+					var dollarText = "Click to Sell";
+					var dollarDms = c.measureText(dollarText);
+					c.fillText(dollarText, this.x-(dollarDms.width/2), this.y-12);
+				}
 			}
-			c.fillText(this.name, this.x-(nameDms.width/2), this.y);
+			c.save();
+			c.font = "bold 10pt Arial, sans-serif";
+			var nameDms = c.measureText(this.name);
+			c.fillText(this.name, this.x-(nameDms.width/2), this.y+4);
+			c.restore();
 		
 			c.restore();
 		} else if(this.state == 2) {
@@ -333,23 +344,29 @@ function hoverOnBubble() {
 	return false;
 }
 function clickedOnBubble() {
-	for(var i=0; i<bubbles.length; i++) {
-		var b = bubbles[i];
-		if(b.invested>0 && b.collidesWithPoint(mpos)) {
-			bubbles.splice(i, 1);
-			cash += b.gains;		
-			return true;
+	if(gameStarted) {
+		for(var i=0; i<bubbles.length; i++) {
+			var b = bubbles[i];
+			if(b.invested>0 && b.collidesWithPoint(mpos)) {
+				bubbles.splice(i, 1);
+				cash += b.gains;		
+				return true;
+			}
 		}
 	}
 	return false;
 }
 function handleMouseDown(e) {
-	clicked = false;
+	if(gameStarted) {
+		clicked = false;
 	
-	mpos = getCursorPosition(e);
+		mpos = getCursorPosition(e);
 
-	if(!clickedOnBubble() && cash>0 && !turret.shooting()) {
-		startCashThrow();
+		if(!clickedOnBubble() && cash>0 && !turret.shooting()) {
+			startCashThrow();
+		}
+	} else {
+		gameStarted = true;
 	}
 }
 function handleMouseUp(e) {
@@ -389,7 +406,7 @@ Number.prototype.formatMoney = function(c, d, t) {
 };
 function drawHeadlines() {
 	for(var i=0; i<newsStory.length; i++) {
-		c.fillText(newsStory[i],280,h-95+(20*i));
+		c.fillText(newsStory[i],280,h-85+(19*i));
 	}
 }
 function drawMoney() {
@@ -399,9 +416,14 @@ function drawMoney() {
 	c.shadowBlur = 3;
 	c.shadowColor = "rgba(0, 0, 0, 0.5)";
 	
+	c.font = "bold 12pt arial, sans-serif";
+	
 	c.fillStyle = '#fff';
 	c.fillText('$'+((cash)*100000).formatMoney(0, '.', ','), 50, h-60);
 	c.restore();
+}
+function drawSplash() {
+	c.fillText("Click anywhere to start.", 10, 10);
 }
 
 function draw() {
@@ -411,19 +433,25 @@ function draw() {
 		var bubble = bubbles[i];
 		bubble.draw();
 	}
-	for(var i=0; i<bullets.length; i++) {
-		var bullet = bullets[i];
-		bullet.draw();
-	}
-	
+
 	c.font = "12pt Arial";
 	drawMoney();
 	drawHeadlines();
+
+	if(gameStarted) {
+		for(var i=0; i<bullets.length; i++) {
+			var bullet = bullets[i];
+			bullet.draw();
+		}
 	
-	if(hoverOnBubble()) {
-		document.getElementById('game').style.cursor = 'pointer';
+	
+		if(hoverOnBubble()) {
+			document.getElementById('game').style.cursor = 'pointer';
+		} else {
+			document.getElementById('game').style.cursor = 'default';
+		}
 	} else {
-		document.getElementById('game').style.cursor = 'default';
+		drawSplash();
 	}
 }
 function update() {
