@@ -1,3 +1,4 @@
 canvas {
+	background: url('../images/bg.png') center bottom no-repeat;
 	border: 1px solid #000;
 }

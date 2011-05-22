@@ -1,5 +1,5 @@
-var w = 640;
-var h = 480;
+var w = 480;
+var h = 640;
 
 var game;
 var c;
@@ -14,7 +14,11 @@ var gravity = .01;
 
 var interval = 1.0 / 30;
 
-/* CLASSES */
+var MAX_BUBBLES = 15;
+var BUBBLE_GENERATION_PROB = 0.05;
+
+/* OBJECT CLASSES
+*/
 function Pos(x, y) {
 	this.x = x;
 	this.y = y;
@@ -30,18 +34,42 @@ function Bubble(x, y, radius) {
 	this.vy = 0;
 	
 	this.name = "";
+	this.permalink = "";
 	
 	this.move = function() {
 		this.x += this.vx;
 		this.y += this.vy;
 		
-		this.vy += gravity;
+		//this.vy += gravity;
 	}
 		
 	this.draw = function() {
-		this.move();
-		
 		fillCirc(this.x, this.y, this.radius);
+	}
+}
+
+function Bullet(x, y) {
+	this.x = x;
+	this.y = y;
+	
+	this.tx = mpos.x;
+	this.ty = mpos.y;
+	
+	this.theta = Math.atan2(this.ty - this.y, this.tx - this.x);
+	this.vx = Math.cos(this.theta);
+	this.vy = Math.sin(this.theta);
+	
+	this.move = function() {
+		this.x += this.vx;
+		this.y += this.vy;
+	}
+	
+	this.draw = function() {
+		c.save();
+		c.translate(this.x, this.y);
+		c.rotate(this.theta);
+		c.fillRect(-5, -3, 10, 6);
+		c.restore();
 	}
 }
 
@@ -50,7 +78,7 @@ function Turret() {
 	this.y = h;
 	
 	this.draw = function() {
-		//c.fillRect(w/2 - 10, h-20, 20, 20);
+		fillCirc(w/2, h+10, 40);
 		
 		c.save();
 		c.translate(this.x, this.y);
@@ -60,7 +88,23 @@ function Turret() {
 	}
 }
 
-/* Canvas methods to draw circles */
+function checkBounds() {
+	for(var i=0; i<bullets.length; i++) {
+		var b = bullets[i];
+		
+		if(b.x<0 || b.x>w || b.y<0 || b.y>h) {
+			bullets.splice(i, 1);
+			i--;
+		}
+	}
+}
+
+function randomBubble() {
+	return new Bubble(Math.random()*w, Math.random()*h, 20);
+}
+
+/* Canvas methods to draw circles
+*/
 function circle(x, y, radius) {
 	c.beginPath();
 	c.arc(x, y, radius, 0, Math.PI*2, false);
@@ -94,36 +138,86 @@ function getCursorPosition(e) {
 	return new Pos(x, y);
 }
 
+/* CLICK HANDLERS
+*/
 function handleClick(e) {
 	mpos = getCursorPosition(e);
 
-	bubbles.push(new Bubble(mpos.x, mpos.y, 20));
+	bullets.push(new Bullet(turret.x, turret.y));
+	//bubbles.push(new Bubble(mpos.x, mpos.y, 20));
 }
 function handleMove(e) {
 	mpos = getCursorPosition(e);
-	
-	c.fillRect(mpos.x, mpos.y, 1, 1);		
 }
 
+/* DRAW LOOP
+*/
 function draw() {
 	turret.draw();
 	
 	for(var i=0; i<bubbles.length; i++) {
-		var b = bubbles[i];
-		b.draw();
+		var bubble = bubbles[i];
+		bubble.draw();
+	}
+	for(var i=0; i<bullets.length; i++) {
+		var bullet = bullets[i];
+		bullet.draw();
 	}
 }
 function update() {
+	for(var i=0; i<bubbles.length; i++) {
+		var bubble = bubbles[i];
+		bubble.move();
+	}
 	
+	for(var i=0; i<bullets.length; i++) {
+		var bullet = bullets[i];
+		bullet.move();
+	}
+	
+	checkBounds();
+	
+	$('#feed').innerHTML = bullets.length;
 }
-
 function loop() {
 	game.width = game.width; // clear canvas element
 
 	draw();
-	//update();
-		
+	update();
+	
+	maybeAddBubble();
+	
 	setTimeout('loop()', interval);
+}
+
+function setup(n) {
+    for (var j = 0; j < n; j++) {
+        addBubble();
+    }
+
+}
+
+function maybeAddBubble() {
+    if (bubbles.length < MAX_BUBBLES) {
+        if (Math.random() <= BUBBLE_GENERATION_PROB * interval) {
+            addBubble();
+        }
+    }
+}
+
+function addBubble() {
+    var xPos = Math.floor(Math.random() * (w + 1));
+    var yPos = Math.floor(Math.random() * (h + 1));
+    var b = null;
+
+    $.getJSON('http://www.tekbubbles.com:8080/company/random', function(data) {
+        //alert(data['name']);
+        var calcSize = 20; //from data we should infer
+        var b = new Bubble(xPos, yPos, calcSize);
+        b.name = data['name'];
+        b.permalink = data['permalink']
+        bubbles.push(b);
+    });
 }
 
 window.addEventListener('load', function() {
@@ -133,16 +227,16 @@ window.addEventListener('load', function() {
 	game.addEventListener('click', handleClick);
 	game.addEventListener('mousemove', handleMove);
 	
-	var b = new Bubble(200, 250, 20);
+	for(var i=0; i<9; i++) {
+		var b = randomBubble();
+		bubbles.push(b);
+	}
+	/*var b = new Bubble(200, 250, 20);
+	bubbles.push(b);*/
 	
-	bubbles.push(b);
-	
-	//c.fillRect(50, 25, 150, 100);
-	
-	//strokeCirc(c, 200, 250, 20);
-		
 	turret = new Turret();
 	
+	//setup(1);
+	
 	loop();
-}
-)
+})
