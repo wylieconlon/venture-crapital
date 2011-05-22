@@ -27,7 +27,7 @@ function Pos(x, y) {
 }
 mpos = new Pos(w/2, 0);
 
-function Bubble(x, y, radius, worth, growth, goodchance, badchance, panicchance) {
+function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	this.x = x;
 	this.y = y;
 	this.radius = radius;
@@ -45,7 +45,6 @@ function Bubble(x, y, radius, worth, growth, goodchance, badchance, panicchance)
 	
 	this.growth = growth;
 	this.goodchance = goodchance;
-	this.badchance = badchance;
 	this.panicchance = panicchance;
 	
 	this.collidesWith = function(bullet) {
@@ -276,8 +275,46 @@ function addBubble() {
 
 	$.getJSON('http://www.tekbubbles.com/company/random?callback=?', function(data) {
 		//alert(data['name']);
-		var calcSize = 20; //from data we should infer
-		var b = new Bubble(xPos, yPos, calcSize);
+		//from data we should infer
+		var num_of_employees = data['number_of_employees'];
+		var worth;
+		var radius;
+		var growth;
+		var goodchance;
+		var panicchance;
+		if(num_of_employees == null || num_of_employees <= 3){
+			worth = 500000;
+			growth = 1.12;
+			goodchance = 0.5;
+			panicchance = 0.4;
+			radius = 10;
+		}else if(num_of_employees > 101){
+			worth = 10000000;
+			growth = 1.01;
+			goodchance = 0.35;
+			panicchance = 0.1;
+			radius = 25;
+		}else if(num_of_employees > 20){
+			worth = 50000000;
+			growth = 1.02;
+			radius = 20;
+			goodchance = 0.5;
+			goodchance = 0.4;
+			panicchance = 0.1;
+		}else if(num_of_employees > 11){
+			worth = 10000000;
+			growth = 1.05;
+			radius = 15;
+			goodchance = 0.45;
+			panicchange = 0.2;
+		}else if(num_of_employees > 4){
+			worth = 1000000;
+			growth = 1.06;
+			radius = 12;
+			goodchance = 0.5;
+			panicchange = 0.2;
+		}
+		var b = new Bubble(xPos, yPos, radius,worth,growth, goodchance,panicchance);
 		b.name = data['name'];
 		b.permalink = data['permalink']
 		bubbles.push(b);
