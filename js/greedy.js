@@ -61,7 +61,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	}
 	
 	this.update = function() {
-		var growthPerFrame = 1 + (this.growth/2) * interval;
+		var growthPerFrame = 1 + (this.growth/6) * interval;
 		
 		this.radius *= growthPerFrame;
 		this.worth *= growthPerFrame;
@@ -74,7 +74,16 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	}
 		
 	this.draw = function() {
+		c.fillStyle='rgba(93, 167, 193, .5)'
+		strokeCirc(this.x, this.y, this.radius)
+		c.fillStyle='rgba(121, 213, 254, .5)'
 		fillCirc(this.x, this.y, this.radius);
+		
+		c.fillStyle = '#1E2B3F';
+		var textDms = c.measureText(this.name);
+		c.fillText(this.name, this.x-(textDms.width/2), this.y);
+		
+		c.fillStyle='#000';
 	}
 }
 
@@ -168,7 +177,7 @@ function checkBubblesWithBullets() {
 function checkBubbleSize() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
-		if(b.radius < 10 || b.radius > 100) {
+		if(b.radius < 10 || b.radius > 90) {
 			cash -= b.gains;
 			bubbles.splice(i, 1);
 		}
@@ -266,6 +275,29 @@ function handleMove(e) {
 
 /* DRAW LOOP
 */
+function getLines(phrase, maxLength) {
+    var wa=phrase.split(" "),
+        phraseArray=[],
+        lastPhrase="",
+        l = maxLength,
+        measure=0;
+    //c.font = textStyle;
+    for (var i=0;i<wa.length;i++) {
+        var w = wa[i];
+        measure = c.measureText(lastPhrase+w).width;
+        if (measure < l) {
+            lastPhrase+=(" "+w);
+        }else {
+            phraseArray.push(lastPhrase);
+            lastPhrase=w;
+        }
+        if (i===wa.length-1) {
+            phraseArray.push(lastPhrase);
+            break;
+        }
+    }
+    return phraseArray;
+}
 function draw() {
 	turret.draw();
 	
@@ -278,7 +310,9 @@ function draw() {
 		bullet.draw();
 	}
 	c.font = "12pt Arial";
-	c.fillText(newsStory,200,500,100);
+	for(var i=0; i<newsStory.length; i++) {
+		c.fillText(newsStory[i],280,h-95+(20*i),100);
+	}
 	
 	c.drawImage(sprite1, 150, h-200);
 	
@@ -400,7 +434,7 @@ function addNewsStory(){
 		}
 		$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
 		function(data) {
-			newsStory = data['story'];
+			newsStory = getLines(data['story'], 170);
 			var val = data['value']/100;
 			if(good == 0){
 				val = -1*val;
@@ -419,7 +453,7 @@ window.addEventListener('load', function() {
 	game.addEventListener('mouseup', handleMouseUp);
 	game.addEventListener('mousemove', handleMove);
 	
-	setup(1);
+	setup(3);
 	
 	sprite1.src = "images/sprite1.png";
 	sprite2.src = "images/sprite2.png";
