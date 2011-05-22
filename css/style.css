@@ -22,23 +22,23 @@ a:hover{
 #wrap{
 	width:880px;
 	margin:0 auto;
-	padding:40px;
+	padding:20px 40px;
 }
 
 
 /*logo*/
 #header #logo{
-	width:517px;
+	width:571px;
+	margin:auto;
 	height:71px;
 	text-indent:-999999px;
-	padding-bottom:40px;
-	float:left;
+	padding-bottom:20px;
 }
 #header #logo a{
 	display:block;
-	float:left;
+	margin:auto;
 	background:url(../images/banner.png) no-repeat;
-	width:517px;
+	width:571px;
 	height:71px;
 }
 
