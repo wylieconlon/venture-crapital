@@ -55,9 +55,12 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	}
 	
 	this.update = function() {
-		this.worth *= this.growth;
-		this.invested *= this.growth;
-		this.gains *= this.growth;
+		var growthPerFrame = 1 + (this.growth/10) * interval;
+		
+		this.radius *= growthPerFrame;
+		this.worth *= growthPerFrame;
+		this.invested *= growthPerFrame;
+		this.gains *= growthPerFrame;
 	}
 	
 	this.move = function() {
@@ -289,32 +292,32 @@ function addBubble() {
 		var panicchance;
 		if(num_of_employees == null || num_of_employees <= 3){
 			worth = 500000;
-			growth = 1.12;
+			growth = 0.12;
 			goodchance = 0.5;
 			panicchance = 0.4;
 			radius = 10;
 		}else if(num_of_employees > 101){
 			worth = 10000000;
-			growth = 1.01;
+			growth = 0.01;
 			goodchance = 0.35;
 			panicchance = 0.1;
 			radius = 25;
 		}else if(num_of_employees > 20){
 			worth = 50000000;
-			growth = 1.02;
+			growth = 0.02;
 			radius = 20;
 			goodchance = 0.5;
 			goodchance = 0.4;
 			panicchance = 0.1;
 		}else if(num_of_employees > 11){
 			worth = 10000000;
-			growth = 1.05;
+			growth = 0.05;
 			radius = 15;
 			goodchance = 0.45;
 			panicchange = 0.2;
 		}else if(num_of_employees > 4){
 			worth = 1000000;
-			growth = 1.06;
+			growth = 0.06;
 			radius = 12;
 			goodchance = 0.5;
 			panicchange = 0.2;
