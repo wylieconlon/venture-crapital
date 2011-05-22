@@ -56,16 +56,15 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	this.goodchance = goodchance;
 	this.panicchance = panicchance;
 	
-	this.collidesWith = function(bullet) {
-		return ((Math.sqrt(Math.pow(this.x-bullet.x, 2) + Math.pow(this.y-bullet.y, 2)))<this.radius);
+	this.collidesWithPoint = function(p) {
+		return ((Math.sqrt(Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2)))<this.radius);
 	}
 	
 	this.update = function() {
-		var growthPerFrame = 1 + (this.growth/10) * interval;
+		var growthPerFrame = 1 + (this.growth/2) * interval;
 		
 		this.radius *= growthPerFrame;
 		this.worth *= growthPerFrame;
-		this.invested *= growthPerFrame;
 		this.gains *= growthPerFrame;
 	}
 	
@@ -156,7 +155,7 @@ function checkBubblesWithBullets() {
 		for(var j=0; j<bubbles.length; j++) {
 			var bubble = bubbles[j];
 			
-			if(bubble.collidesWith(bullet)) {
+			if(bubble.collidesWithPoint(bullet)) {
 				bubble.radius += 2;
 				bubble.invested++;
 				bubble.gains++;
@@ -166,10 +165,20 @@ function checkBubblesWithBullets() {
 		}
 	}
 }
+function checkBubbleSize() {
+	for(var i=0; i<bubbles.length; i++) {
+		var b = bubbles[i];
+		if(b.radius < 10 || b.radius > 100) {
+			cash -= b.gains;
+			bubbles.splice(i, 1);
+		}
+	}
+}
 function checkBounds() {
 	checkBubbleBounds();
 	checkBulletBounds();
 	checkBubblesWithBullets();
+	checkBubbleSize();
 }
 
 function randomBubble() {
@@ -214,22 +223,45 @@ function getCursorPosition(e) {
 /* CLICK HANDLERS
 */
 function makeBullet() {
-	bullets.push(new Bullet(turret.x, turret.y));
+	if(cash>0) {
+		bullets.push(new Bullet(turret.x, turret.y));
+		cash--;
+	}
+}
+function hoverOnBubble() {
+	for(var i=0; i<bubbles.length; i++) {
+		var b = bubbles[i];
+		if(b.collidesWithPoint(mpos)) {
+			return true;
+		}
+	}
+	return false;
+}
+function clickedOnBubble() {
+	for(var i=0; i<bubbles.length; i++) {
+		var b = bubbles[i];
+		if(b.collidesWithPoint(mpos)) {
+			bubbles.splice(i, 1);
+			cash += b.gains;		
+			return true;
+		}
+	}
+	return false;
 }
 function handleMouseDown(e) {
 	clicked = false;
 	
 	mpos = getCursorPosition(e);
 
-	makeBullet();
-	
-	cash--;
+	if(!clickedOnBubble()) {
+		makeBullet();
+	}
 }
 function handleMouseUp(e) {
 	clicked = false;
 }
 function handleMove(e) {
-	mpos = getCursorPosition(e);
+	mpos = getCursorPosition(e);	
 }
 
 /* DRAW LOOP
@@ -245,10 +277,18 @@ function draw() {
 		var bullet = bullets[i];
 		bullet.draw();
 	}
-	c.font = "12pt Arial"
+	c.font = "12pt Arial";
 	c.fillText(newsStory,200,500,100);
 	
 	c.drawImage(sprite1, 150, h-200);
+	
+	c.fillText(cash, 10, 20);
+	
+	if(hoverOnBubble()) {
+		document.getElementById('game').style.cursor = 'pointer';
+	} else {
+		document.getElementById('game').style.cursor = 'default';
+	}
 }
 function update() {
 	for(var i=0; i<bubbles.length; i++) {
@@ -263,8 +303,6 @@ function update() {
 	}
 	
 	checkBounds();
-	
-	$('#feed').innerHTML = bullets.length;
 }
 function loop() {
 	game.width = game.width; // clear canvas element
@@ -312,29 +350,29 @@ function addBubble() {
 			growth = 0.12;
 			goodchance = 0.5;
 			panicchance = 0.4;
-			radius = 10;
+			radius = 15;
 		}else if(num_of_employees > 101){
 			worth = 10000000;
 			growth = 0.01;
 			goodchance = 0.35;
 			panicchance = 0.1;
-			radius = 25;
+			radius = 30;
 		}else if(num_of_employees > 20){
 			worth = 50000000;
 			growth = 0.02;
-			radius = 20;
+			radius = 25;
 			goodchance = 0.5;
 			panicchance = 0.1;
 		}else if(num_of_employees > 11){
 			worth = 10000000;
 			growth = 0.05;
-			radius = 15;
+			radius = 20;
 			goodchance = 0.45;
 			panicchange = 0.2;
 		}else if(num_of_employees > 4){
 			worth = 1000000;
 			growth = 0.06;
-			radius = 12;
+			radius = 17;
 			goodchance = 0.5;
 			panicchange = 0.2;
 		}
@@ -356,13 +394,20 @@ function addNewsStory(){
 	var i = Math.floor(Math.random() * (num_companies));
 	var selectedBubble = bubbles[i];
 	var good = 0;
-	if(selectedBubble.goodchance > Math.random()){
-		good = 1;
+	if(selectedBubble!=undefined) {
+		if(selectedBubble.goodchance > Math.random()){
+			good = 1;
+		}
+		$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
+		function(data) {
+			newsStory = data['story'];
+			var val = data['value']/100;
+			if(good == 0){
+				val = -1*val;
+			}
+			selectedBubble.growth += val;
+		});
 	}
-	$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
-			function(data){
-				newsStory = data['story'];
-			}); 
 }
 
 
@@ -379,9 +424,8 @@ window.addEventListener('load', function() {
 	sprite1.src = "images/sprite1.png";
 	sprite2.src = "images/sprite2.png";
 	sprite3.src = "images/sprite3.png";
-	// man.onload = function() {
-	// 	c.drawImage(man, 170, h-150);
-	// }
+	
+	//$('#game_container').append('<div id="money"></div>');
 	
 	turret = new Turret();
 	
