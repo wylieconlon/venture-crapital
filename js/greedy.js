@@ -53,7 +53,9 @@ function Bubble(x, y, radius, worth, growth, goodchance, badchance, panicchance)
 	}
 	
 	this.update = function() {
-		
+		this.worth *= this.growth;
+		this.invested *= this.growth;
+		this.gains *= this.growth;
 	}
 	
 	this.move = function() {
@@ -122,8 +124,18 @@ function checkBubbleBounds() {
 		
 		if(b.x<b.radius || b.x>w-b.radius) {
 			b.vx *= -1;
+			if(b.x<b.radius) {
+				b.x=b.radius;
+			} else {
+				b.x=w-b.radius;
+			}
 		} else if(b.y<b.radius || b.y>h-b.radius) {
 			b.vy *= -1;
+			if(b.y<b.radius) {
+				b.y=b.radius;
+			} else {
+				b.y=h-b.radius;
+			}
 		}
 	}
 }
@@ -170,20 +182,20 @@ function strokeCirc(x, y, radius) {
 }
 
 function getCursorPosition(e) {
-    var x;
-    var y;
-    if (e.pageX != undefined && e.pageY != undefined) {
+	var x;
+	var y;
+	if (e.pageX != undefined && e.pageY != undefined) {
 		x = e.pageX;
 		y = e.pageY;
-    } else {
+	} else {
 		x = e.clientX + document.body.scrollLeft +
-	            document.documentElement.scrollLeft;
+				document.documentElement.scrollLeft;
 		y = e.clientY + document.body.scrollTop +
-            	document.documentElement.scrollTop;
-    }
+				document.documentElement.scrollTop;
+	}
 
 	x -= game.offsetLeft;
-    y -= game.offsetTop;
+	y -= game.offsetTop;
 
 	return new Pos(x, y);
 }
@@ -218,6 +230,7 @@ function draw() {
 function update() {
 	for(var i=0; i<bubbles.length; i++) {
 		var bubble = bubbles[i];
+		bubble.update();
 		bubble.move();
 	}
 	
@@ -242,33 +255,33 @@ function loop() {
 }
 
 function setup(n) {
-    for (var j = 0; j < n; j++) {
-        addBubble();
-    }
+	for (var j = 0; j < n; j++) {
+		addBubble();
+	}
 
 }
 
 function maybeAddBubble() {
-    if (bubbles.length < MAX_BUBBLES) {
-        if (Math.random() <= BUBBLE_GENERATION_PROB * interval) {
-            addBubble();
-        }
-    }
+	if (bubbles.length < MAX_BUBBLES) {
+		if (Math.random() <= BUBBLE_GENERATION_PROB * interval) {
+			addBubble();
+		}
+	}
 }
 
 function addBubble() {
-    var xPos = Math.floor(Math.random() * (w + 1));
-    var yPos = Math.floor(Math.random() * (h + 1));
-    var b = null;
+	var xPos = Math.floor(Math.random() * (w + 1));
+	var yPos = Math.floor(Math.random() * (h + 1));
+	var b = null;
 
-    $.getJSON('http://www.tekbubbles.com/company/random?callback=?', function(data) {
-        alert(data['name']);
-        var calcSize = 20; //from data we should infer
-        var b = new Bubble(xPos, yPos, calcSize);
-        b.name = data['name'];
-        b.permalink = data['permalink']
-        bubbles.push(b);
-    });
+	$.getJSON('http://www.tekbubbles.com/company/random?callback=?', function(data) {
+		//alert(data['name']);
+		var calcSize = 20; //from data we should infer
+		var b = new Bubble(xPos, yPos, calcSize);
+		b.name = data['name'];
+		b.permalink = data['permalink']
+		bubbles.push(b);
+	});
 }
 
 window.addEventListener('load', function() {
