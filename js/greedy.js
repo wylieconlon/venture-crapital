@@ -375,7 +375,7 @@ function handleMouseDown(e) {
 	
 		mpos = getCursorPosition(e);
 
-		if(!clickedOnBubble() && cash>0 && !turret.shooting()) {
+		if(!clickedOnBubble() && cash>0 && mpos.y<turret.y && !turret.shooting()) {
 			startCashThrow();
 		}
 	} else {

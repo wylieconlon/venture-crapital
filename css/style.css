@@ -2,7 +2,7 @@ canvas {
 	display: block;
 	background: url('../images/bg.png') center bottom no-repeat;
 	border: 1px solid #ccc;
-	margin: 20px auto;
+	margin: 10px auto;
 }
 
 body{
@@ -22,7 +22,7 @@ a:hover{
 #wrap{
 	width:880px;
 	margin:0 auto;
-	padding:20px 40px;
+	padding:10px 40px;
 }
 
 
