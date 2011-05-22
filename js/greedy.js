@@ -261,7 +261,7 @@ function addBubble() {
     var yPos = Math.floor(Math.random() * (h + 1));
     var b = null;
 
-    $.getJSON('company/random', function(data) {
+    $.getJSON('company/random?callback=?', function(data) {
         alert(data['name']);
         var calcSize = 20; //from data we should infer
         var b = new Bubble(xPos, yPos, calcSize);
