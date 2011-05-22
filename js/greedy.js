@@ -378,11 +378,11 @@ function handleMove(e) {
 
 /* DRAW LOOP
 **************************************************************************************/
-function getLines(phrase) {
+function getLines(phrase, maxW) {
 	var wa=phrase.split(" "),
 		phraseArray=[],
 		lastPhrase="",
-		l = 170,
+		l = maxW,
 		measure=0;
 	for (var i=0;i<wa.length;i++) {
 		var w = wa[i];
@@ -423,7 +423,39 @@ function drawMoney() {
 	c.restore();
 }
 function drawSplash() {
-	c.fillText("Click anywhere to start.", 10, 10);
+	c.save();
+	c.fillStyle = "rgba(0, 0, 0, .5)";
+	c.fillRect(0, 0, w, h);
+
+	c.font = "18pt arial, sans-serif";
+	c.fillStyle = "rgba(255, 255, 255, 1)";
+
+	c.shadowOffsetX = 1;
+	c.shadowOffsetY = 1;
+	c.shadowBlur = 3;
+	c.shadowColor = "rgba(0, 0, 0, 0.5)";
+
+	c.fillText("So you're a hot shot Wall Street investor.", 20, 40);
+	c.fillText("Big whoop.", 20, 80);
+	var header3 = getLines("Over the next 5 years, prove you got the chops by rising to the top and exit before the bubble pops!", 440);
+	for(var i=0; i<header3.length; i++) {
+		c.fillText(header3[i],20,120+(30*i));
+	}
+	
+	var header4 = getLines("Aim your money bags at the bubbles you believe are gonna get big.", 440);
+	for(var i=0; i<header4.length; i++) {
+		c.fillText(header4[i],20,220+(30*i));
+	}
+	
+	var header5 = getLines("Then click on them to exit before you lose it all.", 440);
+	for(var i=0; i<header5.length; i++) {
+		c.fillText(header5[i],20,300+(30*i));
+	}
+
+	c.font = "bold 18pt arial, sans-serif";
+	var startDms = c.measureText("Click anywhere to start.");
+	c.fillText("Click anywhere to start.", w/2 - startDms.width/2, h-230);
+	c.restore();
 }
 
 function draw() {
@@ -495,7 +527,7 @@ function panic(){
 		var randy = Math.random();
 		if (randy < bubbles[i].panicchance) {
 			bubbles[i].pop();
-			newsStory = getLines("Bubble panic in Valley!");
+			newsStory = getLines("Bubble panic in Valley!", 170);
 		}
 	}
 }
@@ -583,7 +615,7 @@ function addNewsStory(){
 		}
 		$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
 		function(data) {
-			newsStory = getLines(data['story']);
+			newsStory = getLines(data['story'], 170);
 			var val = data['value']/100;
 			if(good == 0){
 				val = -1*val;
