@@ -6,6 +6,7 @@ var game;
 var c;
 
 var gameStarted = false;
+var gameOver = false;
 
 var bubbles = [];
 var bullets = [];
@@ -36,10 +37,22 @@ var pop = new Image();
 
 var dollar = new Image();
 
+var gameover = new Image();
+
 var NEWS_GENERATION_PROB = 0.06;
 var PANIC_GENERATION_PROB = 0.01;
 var URL = "http://venturecrapital.us";
 var newsStory = [];
+
+function reset() {
+	bubbles = [];
+	bullets = [];
+	cash = 50;
+	
+	frames = 0;
+	
+	setup(6);
+}
 
 /* OBJECT CLASSES
 **************************************************************************************/
@@ -119,7 +132,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			strokeCirc(this.x, this.y, this.radius)
 			fillCirc(this.x, this.y, this.radius);
 			if(this.radius<MIN_RADIUS+5 || this.radius>MAX_RADIUS-5) {
-				c.strokeStyle='rgba(249, 56, 11, 0.75)';
+				c.strokeStyle='rgba(249, 56, 11, 0.5)';
 				c.lineWidth=1;
 				strokeCirc(this.x, this.y, this.radius+2);
 			}
@@ -367,6 +380,8 @@ function handleMouseDown(e) {
 		}
 	} else {
 		gameStarted = true;
+		gameOver = false;
+		reset();
 	}
 }
 function handleMouseUp(e) {
@@ -437,7 +452,7 @@ function drawSplash() {
 
 	c.fillText("So you're a hot shot Wall Street investor.", 20, 40);
 	c.fillText("Big whoop.", 20, 80);
-	var header3 = getLines("Over the next 5 years, prove you got the chops by rising to the top and exit before the bubble pops!", 440);
+	var header3 = getLines("Over the next 5 years, prove you got the chops by rising to the top and exiting before the bubble pops!", 440);
 	for(var i=0; i<header3.length; i++) {
 		c.fillText(header3[i],20,120+(30*i));
 	}
@@ -455,6 +470,25 @@ function drawSplash() {
 	c.font = "bold 18pt arial, sans-serif";
 	var startDms = c.measureText("Click anywhere to start.");
 	c.fillText("Click anywhere to start.", w/2 - startDms.width/2, h-230);
+	c.restore();
+}
+function drawGameOver() {
+	c.save();
+	c.fillStyle = "rgba(0, 0, 0, .5)";
+	c.fillRect(0, 0, w, h);
+	
+	c.font = "bold 18pt arial, sans-serif";
+	c.fillStyle = "rgba(255, 255, 255, 1)";
+
+	c.shadowOffsetX = 1;
+	c.shadowOffsetY = 1;
+	c.shadowBlur = 3;
+	c.shadowColor = "rgba(0, 0, 0, 0.5)";
+	
+	c.drawImage(gameover, 0, 0);
+	
+	var restartDms = c.measureText("Click to play again.");
+	c.fillText("Click to play again.", w/2 - restartDms.width/2, h-100);
 	c.restore();
 }
 
@@ -482,6 +516,8 @@ function draw() {
 		} else {
 			document.getElementById('game').style.cursor = 'default';
 		}
+	} else if(gameOver) {
+		drawGameOver();
 	} else {
 		drawSplash();
 	}
@@ -499,6 +535,11 @@ function update() {
 	}
 	
 	checkBounds();
+	
+	if(cash<=25) {
+		gameOver = true;
+		gameStarted = false;
+	}
 }
 function loop() {
 	game.width = game.width; // clear canvas element
@@ -643,7 +684,9 @@ window.addEventListener('load', function() {
 	
 	pop.src = "images/pop.png";
 	
-	dollar.src = "images/cash.png"
+	dollar.src = "images/cash.png";
+	
+	gameover.src = "images/gameover.png";
 	
 	turret = new Turret();
 	
