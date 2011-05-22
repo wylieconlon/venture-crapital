@@ -8,6 +8,8 @@ var bubbles = [];
 var bullets = [];
 var turret;
 
+var cash = 50;
+
 var mpos;
 
 var gravity = .01;
@@ -25,22 +27,38 @@ function Pos(x, y) {
 }
 mpos = new Pos(w/2, 0);
 
-function Bubble(x, y, radius) {
+function Bubble(x, y, radius, worth, growth, goodchance, badchance, panicchance) {
 	this.x = x;
 	this.y = y;
 	this.radius = radius;
 	
-	this.vx = 0;
-	this.vy = 0;
+	this.vx = Math.random()-.5;
+	this.vy = Math.random()-.5;
 	
 	this.name = "";
 	this.permalink = "";
 	
+	this.invested = 0;
+	this.gains = 0;
+	
+	this.worth = worth;
+	
+	this.growth = growth;
+	this.goodchance = goodchance;
+	this.badchance = badchance;
+	this.panicchance = panicchance;
+	
+	this.collidesWith = function(bullet) {
+		return ((Math.sqrt(Math.pow(this.x-bullet.x, 2) + Math.pow(this.y-bullet.y, 2)))<this.radius);
+	}
+	
+	this.update = function() {
+		
+	}
+	
 	this.move = function() {
 		this.x += this.vx;
 		this.y += this.vy;
-		
-		//this.vy += gravity;
 	}
 		
 	this.draw = function() {
@@ -56,8 +74,8 @@ function Bullet(x, y) {
 	this.ty = mpos.y;
 	
 	this.theta = Math.atan2(this.ty - this.y, this.tx - this.x);
-	this.vx = Math.cos(this.theta);
-	this.vy = Math.sin(this.theta);
+	this.vx = 2 * Math.cos(this.theta);
+	this.vy = 2 * Math.sin(this.theta);
 	
 	this.move = function() {
 		this.x += this.vx;
@@ -88,15 +106,47 @@ function Turret() {
 	}
 }
 
-function checkBounds() {
+function checkBulletBounds() {
 	for(var i=0; i<bullets.length; i++) {
 		var b = bullets[i];
-		
+	
 		if(b.x<0 || b.x>w || b.y<0 || b.y>h) {
 			bullets.splice(i, 1);
 			i--;
 		}
 	}
+}
+function checkBubbleBounds() {
+	for(var i=0; i<bubbles.length; i++) {
+		var b = bubbles[i];
+		
+		if(b.x<b.radius || b.x>w-b.radius) {
+			b.vx *= -1;
+		} else if(b.y<b.radius || b.y>h-b.radius) {
+			b.vy *= -1;
+		}
+	}
+}
+function checkBubblesWithBullets() {
+	for(var i=0; i<bullets.length; i++) {
+		var bullet = bullets[i];
+		for(var j=0; j<bubbles.length; j++) {
+			var bubble = bubbles[j];
+			
+			if(bubble.collidesWith(bullet)) {
+				bubble.radius += 2;
+				bubble.invested++;
+				bubble.gains++;
+				
+				bullets.splice(i, 1);
+			}
+		}
+	}
+}
+function checkBounds() {
+	checkBubbleBounds();
+	checkBulletBounds();
+	checkBubblesWithBullets();
 }
 
 function randomBubble() {
@@ -144,7 +194,8 @@ function handleClick(e) {
 	mpos = getCursorPosition(e);
 
 	bullets.push(new Bullet(turret.x, turret.y));
-	//bubbles.push(new Bubble(mpos.x, mpos.y, 20));
+	
+	cash--;
 }
 function handleMove(e) {
 	mpos = getCursorPosition(e);
@@ -210,8 +261,8 @@ function addBubble() {
     var yPos = Math.floor(Math.random() * (h + 1));
     var b = null;
 
-    $.getJSON('http://www.tekbubbles.com:8080/company/random', function(data) {
-        //alert(data['name']);
+    $.getJSON('company/random', function(data) {
+        alert(data['name']);
         var calcSize = 20; //from data we should infer
         var b = new Bubble(xPos, yPos, calcSize);
         b.name = data['name'];
