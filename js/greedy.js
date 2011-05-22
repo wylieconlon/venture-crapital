@@ -536,7 +536,7 @@ function update() {
 	
 	checkBounds();
 	
-	if(cash<=25) {
+	if(cash<=0) {
 		gameOver = true;
 		gameStarted = false;
 	}
