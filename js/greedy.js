@@ -20,16 +20,24 @@ var BUBBLE_GENERATION_PROB = 0.05;
 
 var clicked = false;
 
+var frames = 0;
+
+var sprite;
 var sprite1 = new Image();
 var sprite2 = new Image();
 var sprite3 = new Image();
 
+var pop = new Image();
+
+var dollar = new Image();
+
 var NEWS_GENERATION_PROB = 0.06;
-var URL = "http://www.tekbubbles.com";
-var newsStory = "";
+var PANIC_GENERATION_PROB = 0.01;
+var URL = "http://venturecrapital.us";
+var newsStory = [];
 
 /* OBJECT CLASSES
-*/
+**************************************************************************************/
 function Pos(x, y) {
 	this.x = x;
 	this.y = y;
@@ -56,6 +64,11 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	this.goodchance = goodchance;
 	this.panicchance = panicchance;
 	
+	this.state = 1;
+	this.counter = 0;
+	
+	this.isAlive = true;
+	
 	this.collidesWithPoint = function(p) {
 		return ((Math.sqrt(Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2)))<this.radius);
 	}
@@ -72,18 +85,29 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 		this.x += this.vx;
 		this.y += this.vy;
 	}
-		
+	
 	this.draw = function() {
-		c.fillStyle='rgba(93, 167, 193, .5)'
-		strokeCirc(this.x, this.y, this.radius)
-		c.fillStyle='rgba(121, 213, 254, .5)'
-		fillCirc(this.x, this.y, this.radius);
+		if(this.state == 1) {
+			c.save();
+			c.strokeStyle='rgba(121, 213, 254, 0.75)'
+			strokeCirc(this.x, this.y, this.radius)
+			c.fillStyle='rgba(121, 213, 254, 0.5)'
+			fillCirc(this.x, this.y, this.radius);
 		
-		c.fillStyle = '#1E2B3F';
-		var textDms = c.measureText(this.name);
-		c.fillText(this.name, this.x-(textDms.width/2), this.y);
+			c.fillStyle = '#1E2B3F';
+			var textDms = c.measureText(this.name);
+			c.fillText(this.name, this.x-(textDms.width/2), this.y);
 		
-		c.fillStyle='#000';
+			c.restore();
+		} else if(this.state == 2) {
+			this.alive=false;
+			if(this.counter > 0) {
+				c.drawImage(pop, this.x, this.y);
+				this.vx = 0;
+				this.vy = 0;
+				this.counter--;
+			}
+		}
 	}
 }
 
@@ -107,26 +131,50 @@ function Bullet(x, y) {
 		c.save();
 		c.translate(this.x, this.y);
 		c.rotate(this.theta);
-		c.fillRect(-5, -3, 10, 6);
+		c.drawImage(dollar, -10, -10);
 		c.restore();
 	}
 }
 
 function Turret() {
 	this.x = w/2;
-	this.y = h;
+	this.y = h-175;
+	
+	this.state = 1;
+	this.counter = 0;
+	
+	this.shooting = function() {
+		return !(this.state==1 || (this.state==3 && this.counter < 25));
+	}
 	
 	this.draw = function() {
-		fillCirc(w/2, h+10, 40);
+		if(this.state == 2) {
+			if(this.counter == 0) {
+				this.state = 3;
+				sprite = sprite3;
+				this.counter = 30;
+			} else {
+				this.counter--;
+			}
+		} else if(this.state == 3) {
+			if(this.counter == 30) {
+				bullets.push(new Bullet(turret.x, turret.y));
+				cash--;
 				
-		c.save();
-		c.translate(this.x, this.y);
-		c.rotate(Math.atan2(mpos.y - this.y, mpos.x - this.x));
-		c.fillRect(0, -5, 50, 10);
-		c.restore();
+				this.counter--;
+			} else if(this.counter==0) {
+				this.state = 1;
+				sprite = sprite1;
+			} else {
+				this.counter--;
+			}			
+		}
+		c.drawImage(sprite, 150, h-200);
 	}
 }
 
+/* COLLISIONS
+**************************************************************************************/
 function checkBulletBounds() {
 	for(var i=0; i<bullets.length; i++) {
 		var b = bullets[i];
@@ -164,7 +212,7 @@ function checkBubblesWithBullets() {
 		for(var j=0; j<bubbles.length; j++) {
 			var bubble = bubbles[j];
 			
-			if(bubble.collidesWithPoint(bullet)) {
+			if(bubble.isAlive && bubble.collidesWithPoint(bullet)) {
 				bubble.radius += 2;
 				bubble.invested++;
 				bubble.gains++;
@@ -177,8 +225,12 @@ function checkBubblesWithBullets() {
 function checkBubbleSize() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
-		if(b.radius < 10 || b.radius > 90) {
+		if(b.isAlive && (b.radius < 10 || b.radius > 90)) {
 			cash -= b.gains;
+			b.state = 2;
+			b.counter = 30;
+			b.isAlive = false;
+		} else if(!b.isAlive && b.counter==0) {
 			bubbles.splice(i, 1);
 		}
 	}
@@ -195,7 +247,7 @@ function randomBubble() {
 }
 
 /* Canvas methods to draw circles
-*/
+**************************************************************************************/
 function circle(x, y, radius) {
 	c.beginPath();
 	c.arc(x, y, radius, 0, Math.PI*2, false);
@@ -213,34 +265,29 @@ function strokeCirc(x, y, radius) {
 function getCursorPosition(e) {
 	var x;
 	var y;
-	if (e.pageX != undefined && e.pageY != undefined) {
-		x = e.pageX;
-		y = e.pageY;
-	} else {
-		x = e.clientX + document.body.scrollLeft +
-				document.documentElement.scrollLeft;
-		y = e.clientY + document.body.scrollTop +
-				document.documentElement.scrollTop;
-	}
 
-	x -= game.offsetLeft;
-	y -= game.offsetTop;
+	if(e.offsetX) {
+		x = e.offsetX;
+		y = e.offsetY;
+	} else if(e.layerX) {
+		x = e.layerX;
+		y = e.layerY;
+	}
 
 	return new Pos(x, y);
 }
 
-/* CLICK HANDLERS
-*/
-function makeBullet() {
-	if(cash>0) {
-		bullets.push(new Bullet(turret.x, turret.y));
-		cash--;
-	}
+/* MOUSE HANDLERS
+**************************************************************************************/
+function startCashThrow() {
+	turret.state = 2;
+	turret.counter = 10;
+	sprite = sprite2;
 }
 function hoverOnBubble() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
-		if(b.collidesWithPoint(mpos)) {
+		if(b.isAlive && b.collidesWithPoint(mpos)) {
 			return true;
 		}
 	}
@@ -262,8 +309,8 @@ function handleMouseDown(e) {
 	
 	mpos = getCursorPosition(e);
 
-	if(!clickedOnBubble()) {
-		makeBullet();
+	if(!clickedOnBubble() && cash>0 && !turret.shooting()) {
+		startCashThrow();
 	}
 }
 function handleMouseUp(e) {
@@ -274,30 +321,50 @@ function handleMove(e) {
 }
 
 /* DRAW LOOP
-*/
+**************************************************************************************/
 function getLines(phrase, maxLength) {
-    var wa=phrase.split(" "),
-        phraseArray=[],
-        lastPhrase="",
-        l = maxLength,
-        measure=0;
-    //c.font = textStyle;
-    for (var i=0;i<wa.length;i++) {
-        var w = wa[i];
-        measure = c.measureText(lastPhrase+w).width;
-        if (measure < l) {
-            lastPhrase+=(" "+w);
-        }else {
-            phraseArray.push(lastPhrase);
-            lastPhrase=w;
-        }
-        if (i===wa.length-1) {
-            phraseArray.push(lastPhrase);
-            break;
-        }
-    }
-    return phraseArray;
+	var wa=phrase.split(" "),
+		phraseArray=[],
+		lastPhrase="",
+		l = maxLength,
+		measure=0;
+	for (var i=0;i<wa.length;i++) {
+		var w = wa[i];
+		measure = c.measureText(lastPhrase+w).width;
+		if (measure < l) {
+			lastPhrase+=(" "+w);
+		}else {
+			phraseArray.push(lastPhrase);
+			lastPhrase=w;
+		}
+		if (i===wa.length-1) {
+			phraseArray.push(lastPhrase);
+			break;
+		}
+	}
+	return phraseArray;
 }
+Number.prototype.formatMoney = function(c, d, t) {
+	var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+   		return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+};
+function drawHeadlines() {
+	for(var i=0; i<newsStory.length; i++) {
+		c.fillText(newsStory[i],280,h-95+(20*i),100);
+	}
+}
+function drawMoney() {
+	c.save();
+	c.shadowOffsetX = 1;
+	c.shadowOffsetY = 1;
+	c.shadowBlur = 3;
+	c.shadowColor = "rgba(0, 0, 0, 0.5)";
+	
+	c.fillStyle = '#fff';
+	c.fillText('$'+(Math.round(cash)*100000).formatMoney(0, '.', ','), 50, h-60);
+	c.restore();
+}
+
 function draw() {
 	turret.draw();
 	
@@ -309,14 +376,10 @@ function draw() {
 		var bullet = bullets[i];
 		bullet.draw();
 	}
+	
 	c.font = "12pt Arial";
-	for(var i=0; i<newsStory.length; i++) {
-		c.fillText(newsStory[i],280,h-95+(20*i),100);
-	}
-	
-	c.drawImage(sprite1, 150, h-200);
-	
-	c.fillText(cash, 10, 20);
+	drawMoney();
+	drawHeadlines();
 	
 	if(hoverOnBubble()) {
 		document.getElementById('game').style.cursor = 'pointer';
@@ -341,20 +404,39 @@ function update() {
 function loop() {
 	game.width = game.width; // clear canvas element
 
+	frames++;
+
 	draw();
 	update();
 	
 	maybeAddBubble();
 	maybeAddNewsStory();
 	
+	maybePanic();
+	
 	setTimeout('loop()', interval);
+}
+
+function maybePanic(){
+	if(Math.random() <= PANIC_GENERATION_PROB*interval){
+		panic();
+	}
+}
+
+function panic(){
+	for(var i = 0; i < bubbles.length; i++){
+		var randy = Math.random();
+		if (randy < bubbles[i].panicchance){
+			bubbles.splice(i,1);
+			i--;
+		}
+	}
 }
 
 function setup(n) {
 	for (var j = 0; j < n; j++) {
 		addBubble();
 	}
-
 }
 
 function maybeAddBubble() {
@@ -371,44 +453,42 @@ function addBubble() {
 	var b = null;
 
 	$.getJSON(URL+'/company/random?callback=?', function(data) {
-		//alert(data['name']);
-		//from data we should infer
 		var num_of_employees = data['number_of_employees'];
 		var worth;
 		var radius;
 		var growth;
 		var goodchance;
 		var panicchance;
-		if(num_of_employees == null || num_of_employees <= 3){
+		if(num_of_employees == null || num_of_employees <= 3) {
 			worth = 500000;
 			growth = 0.12;
 			goodchance = 0.5;
 			panicchance = 0.4;
 			radius = 15;
-		}else if(num_of_employees > 101){
+		} else if(num_of_employees > 101) {
 			worth = 10000000;
 			growth = 0.01;
 			goodchance = 0.35;
 			panicchance = 0.1;
 			radius = 30;
-		}else if(num_of_employees > 20){
+		} else if(num_of_employees > 20) {
 			worth = 50000000;
 			growth = 0.02;
 			radius = 25;
 			goodchance = 0.5;
 			panicchance = 0.1;
-		}else if(num_of_employees > 11){
+		} else if(num_of_employees > 11) {
 			worth = 10000000;
 			growth = 0.05;
 			radius = 20;
 			goodchance = 0.45;
 			panicchange = 0.2;
-		}else if(num_of_employees > 4){
+		} else if(num_of_employees > 4) {
 			worth = 1000000;
 			growth = 0.06;
 			radius = 17;
 			goodchance = 0.5;
-			panicchange = 0.2;
+			panicchange = 0.3;
 		}
 		var b = new Bubble(xPos, yPos, radius,worth,growth, goodchance,panicchance);
 		b.name = data['name'];
@@ -458,8 +538,11 @@ window.addEventListener('load', function() {
 	sprite1.src = "images/sprite1.png";
 	sprite2.src = "images/sprite2.png";
 	sprite3.src = "images/sprite3.png";
+	sprite = sprite1;
 	
-	//$('#game_container').append('<div id="money"></div>');
+	pop.src = "images/pop.png";
+	
+	dollar.src = "images/cash.png"
 	
 	turret = new Turret();
 	
