@@ -1,6 +1,6 @@
 var w = 480;
 var h = 640;
-var maxh = 450;
+var maxh = 420;
 
 var game;
 var c;
@@ -13,15 +13,16 @@ var cash = 50;
 
 var mpos;
 
-var gravity = .01;
-
 var interval = 1.0 / 30;
 
 var MAX_BUBBLES = 15;
 var BUBBLE_GENERATION_PROB = 0.05;
 
-var man = new Image();
+var clicked = false;
 
+var sprite1 = new Image();
+var sprite2 = new Image();
+var sprite3 = new Image();
 
 var NEWS_GENERATION_PROB = 0.06;
 var URL = "http://www.tekbubbles.com";
@@ -211,12 +212,20 @@ function getCursorPosition(e) {
 
 /* CLICK HANDLERS
 */
-function handleClick(e) {
+function makeBullet() {
+	bullets.push(new Bullet(turret.x, turret.y));
+}
+function handleMouseDown(e) {
+	clicked = false;
+	
 	mpos = getCursorPosition(e);
 
-	bullets.push(new Bullet(turret.x, turret.y));
+	makeBullet();
 	
 	cash--;
+}
+function handleMouseUp(e) {
+	clicked = false;
 }
 function handleMove(e) {
 	mpos = getCursorPosition(e);
@@ -236,7 +245,7 @@ function draw() {
 		bullet.draw();
 	}
 	
-	c.drawImage(man, 170, h-150);
+	c.drawImage(sprite1, 150, h-200);
 }
 function update() {
 	for(var i=0; i<bubbles.length; i++) {
@@ -312,6 +321,7 @@ function addBubble() {
 			growth = 0.02;
 			radius = 20;
 			goodchance = 0.5;
+			goodchance = 0.4;
 			panicchance = 0.1;
 		}else if(num_of_employees > 11){
 			worth = 10000000;
@@ -353,16 +363,20 @@ function addNewsStory(){
 			}); 
 }
 
+
 window.addEventListener('load', function() {
 	game = document.getElementById('game');
 	c = game.getContext('2d');
 	
-	game.addEventListener('click', handleClick);
+	game.addEventListener('mousedown', handleMouseDown);
+	game.addEventListener('mouseup', handleMouseUp);
 	game.addEventListener('mousemove', handleMove);
 	
 	setup(1);
 	
-	man.src = "/images/sprite1.png";
+	sprite1.src = "/images/sprite1.png";
+	sprite2.src = "/images/sprite2.png";
+	sprite3.src = "/images/sprite3.png";
 	// man.onload = function() {
 	// 	c.drawImage(man, 170, h-150);
 	// }
