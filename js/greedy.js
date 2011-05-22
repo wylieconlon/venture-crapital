@@ -450,26 +450,21 @@ function drawSplash() {
 	c.shadowBlur = 3;
 	c.shadowColor = "rgba(0, 0, 0, 0.5)";
 
-	c.fillText("So you're a hot shot Wall Street investor.", 20, 40);
+	c.fillText("So you're a hot shot VC.", 20, 40);
 	c.fillText("Big whoop.", 20, 80);
-	var header3 = getLines("Over the next 5 years, prove you got the chops by rising to the top and exiting before the bubble pops!", 440);
+	var header3 = getLines("Prove you got the chops by rising to the top and selling before the bubble pops!", 440);
 	for(var i=0; i<header3.length; i++) {
 		c.fillText(header3[i],20,120+(30*i));
 	}
 	
-	var header4 = getLines("Aim your money bags at the bubbles you believe are gonna get big.", 440);
+	var header4 = getLines("Throw your money at bubbles to grow them, and click to sell.", 440);
 	for(var i=0; i<header4.length; i++) {
-		c.fillText(header4[i],20,220+(30*i));
-	}
-	
-	var header5 = getLines("Then click on them to exit before you lose it all.", 440);
-	for(var i=0; i<header5.length; i++) {
-		c.fillText(header5[i],20,300+(30*i));
+		c.fillText(header4[i],20,200+(30*i));
 	}
 
 	c.font = "bold 18pt arial, sans-serif";
 	var startDms = c.measureText("Click anywhere to start.");
-	c.fillText("Click anywhere to start.", w/2 - startDms.width/2, h-230);
+	c.fillText("Click anywhere to start.", w/2 - startDms.width/2, h/2);
 	c.restore();
 }
 function drawGameOver() {
