@@ -22,6 +22,10 @@ var BUBBLE_GENERATION_PROB = 0.05;
 
 var man = new Image();
 
+
+var NEWS_GENERATION_PROB = 0.06;
+var URL = "http://www.tekbubbles.com";
+
 /* OBJECT CLASSES
 */
 function Pos(x, y) {
@@ -257,6 +261,7 @@ function loop() {
 	update();
 	
 	maybeAddBubble();
+	maybeAddNewsStory();
 	
 	setTimeout('loop()', interval);
 }
@@ -281,7 +286,7 @@ function addBubble() {
 	var yPos = Math.floor(Math.random() * (maxh + 1));
 	var b = null;
 
-	$.getJSON('http://www.tekbubbles.com/company/random?callback=?', function(data) {
+	$.getJSON(URL+'/company/random?callback=?', function(data) {
 		//alert(data['name']);
 		//from data we should infer
 		var num_of_employees = data['number_of_employees'];
@@ -307,7 +312,6 @@ function addBubble() {
 			growth = 0.02;
 			radius = 20;
 			goodchance = 0.5;
-			goodchance = 0.4;
 			panicchance = 0.1;
 		}else if(num_of_employees > 11){
 			worth = 10000000;
@@ -327,6 +331,26 @@ function addBubble() {
 		b.permalink = data['permalink']
 		bubbles.push(b);
 	});
+}
+
+function maybeAddNewsStory(){
+	if(Math.random() <= NEWS_GENERATION_PROB*interval){
+		addNewsStory();
+	}
+}
+
+function addNewsStory(){
+	var num_companies = bubbles.length;
+	var i = Math.floor(Math.random() * (num_companies));
+	var selectedBubble = bubbles[i];
+	var good = 0;
+	if(selectedBubble.goodchance > Math.random()){
+		good = 1;
+	}
+	$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
+			function(data){
+				//alert(data['story']);
+			}); 
 }
 
 window.addEventListener('load', function() {
