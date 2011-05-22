@@ -74,6 +74,12 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 		return ((Math.sqrt(Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2)))<this.radius);
 	}
 	
+	this.pop = function() {
+		this.state = 2;
+		this.counter = 30;
+		this.isAlive = false;
+	}
+	
 	this.update = function() {
 		var growthPerFrame = 1 + (this.growth/6) * interval;
 		
@@ -250,9 +256,7 @@ function checkBubbleSize() {
 		var b = bubbles[i];
 		if(b.isAlive && (b.radius < 10 || b.radius > 90)) {
 			cash -= b.gains;
-			b.state = 2;
-			b.counter = 30;
-			b.isAlive = false;
+			b.pop();
 		} else if(!b.isAlive && b.counter==0) {
 			bubbles.splice(i, 1);
 		}
@@ -387,7 +391,7 @@ function drawMoney() {
 	c.shadowColor = "rgba(0, 0, 0, 0.5)";
 	
 	c.fillStyle = '#fff';
-	c.fillText('$'+(Math.round(cash)*100000).formatMoney(0, '.', ','), 50, h-60);
+	c.fillText('$'+((cash)*100000).formatMoney(0, '.', ','), 50, h-60);
 	c.restore();
 }
 
@@ -453,8 +457,9 @@ function panic(){
 	for(var i = 0; i < bubbles.length; i++){
 		var randy = Math.random();
 		if (randy < bubbles[i].panicchance){
-			bubbles.splice(i,1);
-			i--;
+			/*bubbles.splice(i,1);
+			i--;*/
+			bubbles[i].pop();
 		}
 	}
 }
@@ -485,7 +490,7 @@ function addBubble() {
 		var growth;
 		var goodchance;
 		var panicchance;
-		if(num_of_employees == null || num_of_employees <= 3) {
+		if(num_of_employees == undefined || num_of_employees <= 3) {
 			worth = 500000;
 			growth = 0.12;
 			goodchance = 0.4;
@@ -516,10 +521,12 @@ function addBubble() {
 			goodchance = 0.4;
 			panicchange = 0.3;
 		}
-		var b = new Bubble(xPos, yPos, radius,worth,growth, goodchance,panicchance);
-		b.name = data['name'];
-		b.permalink = data['permalink']
-		bubbles.push(b);
+		if(radius != undefined) {
+			var b = new Bubble(xPos, yPos, radius,worth,growth, goodchance,panicchance);
+			b.name = data['name'];
+			b.permalink = data['permalink']
+			bubbles.push(b);
+		}
 	});
 }
 
@@ -559,7 +566,7 @@ window.addEventListener('load', function() {
 	game.addEventListener('mouseup', handleMouseUp);
 	game.addEventListener('mousemove', handleMove);
 	
-	setup(3);
+	setup(10);
 	
 	sprite1.src = "images/sprite1.png";
 	sprite2.src = "images/sprite2.png";
