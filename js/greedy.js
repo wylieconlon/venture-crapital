@@ -1,5 +1,6 @@
 var w = 480;
 var h = 640;
+var maxh = 450;
 
 var game;
 var c;
@@ -18,6 +19,8 @@ var interval = 1.0 / 30;
 
 var MAX_BUBBLES = 15;
 var BUBBLE_GENERATION_PROB = 0.05;
+
+var man = new Image();
 
 /* OBJECT CLASSES
 */
@@ -98,7 +101,7 @@ function Turret() {
 	
 	this.draw = function() {
 		fillCirc(w/2, h+10, 40);
-		
+				
 		c.save();
 		c.translate(this.x, this.y);
 		c.rotate(Math.atan2(mpos.y - this.y, mpos.x - this.x));
@@ -128,12 +131,12 @@ function checkBubbleBounds() {
 			} else {
 				b.x=w-b.radius;
 			}
-		} else if(b.y<b.radius || b.y>h-b.radius) {
+		} else if(b.y<b.radius || b.y>maxh-b.radius) {
 			b.vy *= -1;
 			if(b.y<b.radius) {
 				b.y=b.radius;
 			} else {
-				b.y=h-b.radius;
+				b.y=maxh-b.radius;
 			}
 		}
 	}
@@ -225,6 +228,8 @@ function draw() {
 		var bullet = bullets[i];
 		bullet.draw();
 	}
+	
+	c.drawImage(man, 170, h-150);
 }
 function update() {
 	for(var i=0; i<bubbles.length; i++) {
@@ -270,7 +275,7 @@ function maybeAddBubble() {
 
 function addBubble() {
 	var xPos = Math.floor(Math.random() * (w + 1));
-	var yPos = Math.floor(Math.random() * (h + 1));
+	var yPos = Math.floor(Math.random() * (maxh + 1));
 	var b = null;
 
 	$.getJSON('http://www.tekbubbles.com/company/random?callback=?', function(data) {
@@ -329,6 +334,12 @@ window.addEventListener('load', function() {
 	game.addEventListener('mousemove', handleMove);
 	
 	setup(1);
+	
+	man.src = "/images/sprite1.png";
+	// man.onload = function() {
+	// 	c.drawImage(man, 170, h-150);
+	// }
+	
 	turret = new Turret();
 	
 	loop();
