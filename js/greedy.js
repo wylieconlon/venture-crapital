@@ -26,6 +26,7 @@ var sprite3 = new Image();
 
 var NEWS_GENERATION_PROB = 0.06;
 var URL = "http://www.tekbubbles.com";
+var newsStory = "";
 
 /* OBJECT CLASSES
 */
@@ -244,6 +245,8 @@ function draw() {
 		var bullet = bullets[i];
 		bullet.draw();
 	}
+	c.font = "12pt Arial"
+	c.fillText(newsStory,200,500,100);
 	
 	c.drawImage(sprite1, 150, h-200);
 }
@@ -321,7 +324,6 @@ function addBubble() {
 			growth = 0.02;
 			radius = 20;
 			goodchance = 0.5;
-			goodchance = 0.4;
 			panicchance = 0.1;
 		}else if(num_of_employees > 11){
 			worth = 10000000;
@@ -359,7 +361,7 @@ function addNewsStory(){
 	}
 	$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
 			function(data){
-				//alert(data['story']);
+				newsStory = data['story'];
 			}); 
 }
 
@@ -374,9 +376,9 @@ window.addEventListener('load', function() {
 	
 	setup(1);
 	
-	sprite1.src = "/images/sprite1.png";
-	sprite2.src = "/images/sprite2.png";
-	sprite3.src = "/images/sprite3.png";
+	sprite1.src = "images/sprite1.png";
+	sprite2.src = "images/sprite2.png";
+	sprite3.src = "images/sprite3.png";
 	// man.onload = function() {
 	// 	c.drawImage(man, 170, h-150);
 	// }
