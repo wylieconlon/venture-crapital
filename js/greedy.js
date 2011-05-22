@@ -67,6 +67,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	this.state = 1;
 	this.counter = 0;
 	
+	this.hover = false;
 	this.isAlive = true;
 	
 	this.collidesWithPoint = function(p) {
@@ -89,14 +90,36 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 	this.draw = function() {
 		if(this.state == 1) {
 			c.save();
-			c.strokeStyle='rgba(121, 213, 254, 0.75)'
+			c.lineWidth = 3;
+			
+			if(this.hover && this.invested>0) {
+				if(this.gains>this.invested) {
+					c.strokeStyle='rgba(126, 252, 122, 0.75)';
+					c.fillStyle='rgba(126, 252, 122, 0.5)'					
+				} else {
+					c.strokeStyle='rgba(249, 171, 112, .75)';
+					c.fillStyle='rgba(249, 171, 112, 0.5)'
+				}
+			} else {
+				c.strokeStyle='rgba(121, 213, 254, 0.75)'
+				c.fillStyle='rgba(121, 213, 254, 0.5)'
+			}
+			
 			strokeCirc(this.x, this.y, this.radius)
-			c.fillStyle='rgba(121, 213, 254, 0.5)'
 			fillCirc(this.x, this.y, this.radius);
 		
 			c.fillStyle = '#1E2B3F';
-			var textDms = c.measureText(this.name);
-			c.fillText(this.name, this.x-(textDms.width/2), this.y);
+			var nameDms = c.measureText(this.name);
+			if(this.invested>0) {
+				if(this.gains > this.invested) {
+					var gainText = '$'+((this.gains-this.invested)*100000).formatMoney(0, '.', ',');
+				} else {
+					var gainText = '-$'+((this.invested-this.gains)*100000).formatMoney(0, '.', ',');
+				}
+				var gainDms = c.measureText(gainText);
+				c.fillText(gainText, this.x-(gainDms.width/2), this.y+16);
+			}
+			c.fillText(this.name, this.x-(nameDms.width/2), this.y);
 		
 			c.restore();
 		} else if(this.state == 2) {
@@ -130,7 +153,7 @@ function Bullet(x, y) {
 	this.draw = function() {
 		c.save();
 		c.translate(this.x, this.y);
-		c.rotate(this.theta);
+		//c.rotate(this.theta);
 		c.drawImage(dollar, -10, -10);
 		c.restore();
 	}
@@ -288,7 +311,10 @@ function hoverOnBubble() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
 		if(b.isAlive && b.collidesWithPoint(mpos)) {
+			b.hover = true;
 			return true;
+		} else {
+			b.hover = false;
 		}
 	}
 	return false;
@@ -462,32 +488,32 @@ function addBubble() {
 		if(num_of_employees == null || num_of_employees <= 3) {
 			worth = 500000;
 			growth = 0.12;
-			goodchance = 0.5;
+			goodchance = 0.4;
 			panicchance = 0.4;
 			radius = 15;
 		} else if(num_of_employees > 101) {
 			worth = 10000000;
 			growth = 0.01;
-			goodchance = 0.35;
+			goodchance = 0.25;
 			panicchance = 0.1;
 			radius = 30;
 		} else if(num_of_employees > 20) {
 			worth = 50000000;
 			growth = 0.02;
 			radius = 25;
-			goodchance = 0.5;
+			goodchance = 0.4;
 			panicchance = 0.1;
 		} else if(num_of_employees > 11) {
 			worth = 10000000;
 			growth = 0.05;
 			radius = 20;
-			goodchance = 0.45;
+			goodchance = 0.35;
 			panicchange = 0.2;
 		} else if(num_of_employees > 4) {
 			worth = 1000000;
 			growth = 0.06;
 			radius = 17;
-			goodchance = 0.5;
+			goodchance = 0.4;
 			panicchange = 0.3;
 		}
 		var b = new Bubble(xPos, yPos, radius,worth,growth, goodchance,panicchance);
