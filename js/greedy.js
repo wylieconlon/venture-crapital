@@ -10,6 +10,8 @@ var turret;
 
 var mpos;
 
+var gravity = .01;
+
 var interval = 1.0 / 30;
 
 /* CLASSES */
@@ -32,12 +34,14 @@ function Bubble(x, y, radius) {
 	this.move = function() {
 		this.x += this.vx;
 		this.y += this.vy;
+		
+		this.vy += gravity;
 	}
 		
 	this.draw = function() {
-		alert("drawing bubble");
+		this.move();
 		
-		fillCirc(c, this.x, this.y, this.radius);
+		fillCirc(this.x, this.y, this.radius);
 	}
 }
 
@@ -93,7 +97,7 @@ function getCursorPosition(e) {
 function handleClick(e) {
 	mpos = getCursorPosition(e);
 
-	strokeCirc(mpos.x, mpos.y, 3);
+	bubbles.push(new Bubble(mpos.x, mpos.y, 20));
 }
 function handleMove(e) {
 	mpos = getCursorPosition(e);
@@ -104,16 +108,17 @@ function handleMove(e) {
 function draw() {
 	turret.draw();
 	
-	// for(var b in bubbles) {
-	// 	b.draw();
-	// }
+	for(var i=0; i<bubbles.length; i++) {
+		var b = bubbles[i];
+		b.draw();
+	}
 }
 function update() {
 	
 }
 
 function loop() {
-	game.width = game.width;
+	game.width = game.width; // clear canvas element
 
 	draw();
 	//update();
@@ -129,7 +134,6 @@ window.addEventListener('load', function() {
 	game.addEventListener('mousemove', handleMove);
 	
 	var b = new Bubble(200, 250, 20);
-	alert(b.typeof);
 	
 	bubbles.push(b);
 	
