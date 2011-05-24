@@ -116,8 +116,8 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			c.save();
 			c.lineWidth = 3;
 			
-			if(this.hover && this.invested>0) {
-				if(this.gains-this.invested > this.invested) {
+			if(this.invested>0) {
+				if(this.growth > 0) {
 					c.strokeStyle='rgba(126, 252, 122, 0.75)';
 					c.fillStyle='rgba(126, 252, 122, 0.5)'					
 				} else {
@@ -139,11 +139,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 		
 			c.fillStyle = '#1E2B3F';
 			if(this.invested>0) {
-				if(this.gains-this.invested > this.invested) {
-					var gainText = '+$'+((this.gains-this.invested*2)*100000).formatMoney(0, '.', ',');
-				} else {
-					var gainText = '-$'+(1*((this.invested*2-this.gains)*100000)).formatMoney(0, '.', ',');
-				}
+				var gainText = '$'+(this.gains*100000).formatMoney(0, '.', ',');
 				var gainDms = c.measureText(gainText);
 				c.fillText(gainText, this.x-(gainDms.width/2), this.y+20);
 
@@ -209,13 +205,6 @@ function Turret() {
 	}
 	
 	this.draw = function() {
-		c.save();
-		c.fillStyle = "rgba(0, 0, 0, .2)";
-		for(var i=0; i<20; i++) {
-			c.fillRect(i*w/20+w/80, maxh, w/40, 1);			
-		}
-		c.restore();
-		
 		if(this.state == 2) {
 			if(this.counter == 0) {
 				this.state = 3;
@@ -330,7 +319,7 @@ function startCashThrow() {
 function hoverOnBubble() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
-		if(b.isAlive && b.collidesWithPoint(mpos)) {
+		if(b.isAlive && b.invested>0 && b.collidesWithPoint(mpos)) {
 			b.hover = true;
 			return true;
 		} else {
