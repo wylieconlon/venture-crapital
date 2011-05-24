@@ -1,4 +1,5 @@
 canvas {
+	position: relative;
 	display: block;
 	background: url('../images/bg.png') center bottom no-repeat;
 	border: 1px solid #ccc;

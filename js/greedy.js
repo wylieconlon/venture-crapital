@@ -140,7 +140,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			c.fillStyle = '#1E2B3F';
 			if(this.invested>0) {
 				if(this.gains > this.invested) {
-					var gainText = '$'+((this.gains-this.invested)*100000).formatMoney(0, '.', ',');
+					var gainText = '+$'+((this.gains-this.invested)*100000).formatMoney(0, '.', ',');
 				} else {
 					var gainText = '-$'+((this.invested-this.gains)*100000).formatMoney(0, '.', ',');
 				}
@@ -306,22 +306,8 @@ function randomBubble() {
 	return new Bubble(Math.random()*w, Math.random()*h, 20);
 }
 
-/* Canvas methods to draw circles
+/* MOUSE HANDLERS
 **************************************************************************************/
-function circle(x, y, radius) {
-	c.beginPath();
-	c.arc(x, y, radius, 0, Math.PI*2, false);
-	c.closePath();
-}
-function fillCirc(x, y, radius) {
-	circle(x, y, radius);
-	c.fill();
-}
-function strokeCirc(x, y, radius) {
-	circle(x, y, radius);
-	c.stroke();
-}
-
 function getCursorPosition(e) {
 	var x;
 	var y;
@@ -337,8 +323,6 @@ function getCursorPosition(e) {
 	return new Pos(x, y);
 }
 
-/* MOUSE HANDLERS
-**************************************************************************************/
 function startCashThrow() {
 	turret.state = 2;
 	turret.counter = 10;
@@ -391,8 +375,131 @@ function handleMove(e) {
 	mpos = getCursorPosition(e);	
 }
 
-/* DRAW LOOP
+/* OBJECT CREATION
 **************************************************************************************/
+function setup(n) {
+	for (var j = 0; j < n; j++) {
+		addBubble();
+	}
+}
+
+function maybeAddBubble() {
+	if (bubbles.length < MAX_BUBBLES) {
+		if(bubbles.length == 0 || Math.random() <= BUBBLE_GENERATION_PROB * interval) {
+			addBubble();
+		}
+	}
+}
+function addBubble() {
+	var xPos = Math.floor(Math.random() * (w + 1));
+	var yPos = Math.floor(Math.random() * (maxh + 1));
+	var b = null;
+
+	$.getJSON(URL+'/company/random?callback=?', function(data) {
+		var num_of_employees = data['number_of_employees'];
+		var worth;
+		var radius;
+		var growth;
+		var goodchance;
+		var panicchance;
+		if(num_of_employees == undefined || num_of_employees <= 3) {
+			worth = 500000;
+			growth = 0.12;
+			goodchance = 0.4;
+			panicchance = 0.4;
+			radius = 15;
+		} else if(num_of_employees > 101) {
+			worth = 10000000;
+			growth = 0.01;
+			goodchance = 0.25;
+			panicchance = 0.1;
+			radius = 30;
+		} else if(num_of_employees > 20) {
+			worth = 50000000;
+			growth = 0.02;
+			radius = 25;
+			goodchance = 0.4;
+			panicchance = 0.1;
+		} else if(num_of_employees > 11) {
+			worth = 10000000;
+			growth = 0.05;
+			radius = 20;
+			goodchance = 0.35;
+			panicchange = 0.2;
+		} else if(num_of_employees > 4) {
+			worth = 1000000;
+			growth = 0.06;
+			radius = 17;
+			goodchance = 0.4;
+			panicchange = 0.3;
+		}
+		if(radius != undefined) {
+			var b = new Bubble(xPos, yPos, radius, worth, growth, goodchance, panicchance);
+			b.name = data['name'];
+			b.permalink = data['permalink'];
+			bubbles.push(b);
+		} 
+	});
+}
+
+function maybeAddNewsStory(){
+	if(Math.random() <= NEWS_GENERATION_PROB*interval) {
+		addNewsStory();
+	}
+}
+function addNewsStory(){
+	var num_companies = bubbles.length;
+	var i = Math.floor(Math.random() * (num_companies));
+	var selectedBubble = bubbles[i];
+	var good = 0;
+	if(selectedBubble!=undefined) {
+		if(selectedBubble.goodchance > Math.random()){
+			good = 1;
+		}
+		$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
+		function(data) {
+			newsStory = getLines(data['story'], 170);
+			var val = data['value']/100;
+			if(good == 0) {
+				val = -1*val;
+			}
+			selectedBubble.growth += val;
+		});
+	}
+}
+
+function maybePanic(){
+	if(Math.random() <= PANIC_GENERATION_PROB*interval){
+		panic();
+	}
+}
+function panic(){
+	for(var i = 0; i < bubbles.length; i++){
+		var randy = Math.random();
+		if (randy < bubbles[i].panicchance) {
+			bubbles[i].pop();
+			newsStory = getLines("Bubble panic in Valley!", 170);
+		}
+	}
+}
+
+/* DRAWING AND VISUALIZATION FUNCTIONS
+**************************************************************************************/
+function circle(x, y, radius) {
+	c.beginPath();
+	c.arc(x, y, radius, 0, Math.PI*2, false);
+	c.closePath();
+}
+function fillCirc(x, y, radius) {
+	circle(x, y, radius);
+	c.fill();
+}
+function strokeCirc(x, y, radius) {
+	circle(x, y, radius);
+	c.stroke();
+}
+
+/* Split a sentence into an array of words that will fit in a given width */
 function getLines(phrase, maxW) {
 	var wa=phrase.split(" "),
 		phraseArray=[],
@@ -415,10 +522,14 @@ function getLines(phrase, maxW) {
 	}
 	return phraseArray;
 }
+/* Format money
+   Usage: (1000).formatMoney(2, '.', ',') => "1,000.00" */
 Number.prototype.formatMoney = function(c, d, t) {
 	var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
    		return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 };
+
+
 function drawHeadlines() {
 	for(var i=0; i<newsStory.length; i++) {
 		c.fillText(newsStory[i],280,h-85+(19*i));
@@ -505,7 +616,6 @@ function draw() {
 			bullet.draw();
 		}
 	
-	
 		if(hoverOnBubble()) {
 			document.getElementById('game').style.cursor = 'pointer';
 		} else {
@@ -552,123 +662,13 @@ function loop() {
 	setTimeout('loop()', interval);
 }
 
-function maybePanic(){
-	if(Math.random() <= PANIC_GENERATION_PROB*interval){
-		panic();
-	}
-}
-
-function panic(){
-	for(var i = 0; i < bubbles.length; i++){
-		var randy = Math.random();
-		if (randy < bubbles[i].panicchance) {
-			bubbles[i].pop();
-			newsStory = getLines("Bubble panic in Valley!", 170);
-		}
-	}
-}
-
-function setup(n) {
-	for (var j = 0; j < n; j++) {
-		addBubble();
-	}
-}
-
-function maybeAddBubble() {
-	if (bubbles.length < MAX_BUBBLES) {
-		if (Math.random() <= BUBBLE_GENERATION_PROB * interval) {
-			addBubble();
-		}
-	}
-}
-
-function addBubble() {
-	var xPos = Math.floor(Math.random() * (w + 1));
-	var yPos = Math.floor(Math.random() * (maxh + 1));
-	var b = null;
-
-	$.getJSON(URL+'/company/random?callback=?', function(data) {
-		var num_of_employees = data['number_of_employees'];
-		var worth;
-		var radius;
-		var growth;
-		var goodchance;
-		var panicchance;
-		if(num_of_employees == undefined || num_of_employees <= 3) {
-			worth = 500000;
-			growth = 0.12;
-			goodchance = 0.4;
-			panicchance = 0.4;
-			radius = 15;
-		} else if(num_of_employees > 101) {
-			worth = 10000000;
-			growth = 0.01;
-			goodchance = 0.25;
-			panicchance = 0.1;
-			radius = 30;
-		} else if(num_of_employees > 20) {
-			worth = 50000000;
-			growth = 0.02;
-			radius = 25;
-			goodchance = 0.4;
-			panicchance = 0.1;
-		} else if(num_of_employees > 11) {
-			worth = 10000000;
-			growth = 0.05;
-			radius = 20;
-			goodchance = 0.35;
-			panicchange = 0.2;
-		} else if(num_of_employees > 4) {
-			worth = 1000000;
-			growth = 0.06;
-			radius = 17;
-			goodchance = 0.4;
-			panicchange = 0.3;
-		}
-		if(radius != undefined) {
-			var b = new Bubble(xPos, yPos, radius,worth,growth, goodchance,panicchance);
-			b.name = data['name'];
-			b.permalink = data['permalink']
-			bubbles.push(b);
-		} 
-	});
-}
-
-function maybeAddNewsStory(){
-	if(Math.random() <= NEWS_GENERATION_PROB*interval){
-		addNewsStory();
-	}
-}
-
-function addNewsStory(){
-	var num_companies = bubbles.length;
-	var i = Math.floor(Math.random() * (num_companies));
-	var selectedBubble = bubbles[i];
-	var good = 0;
-	if(selectedBubble!=undefined) {
-		if(selectedBubble.goodchance > Math.random()){
-			good = 1;
-		}
-		$.getJSON(URL+'/story/'+selectedBubble.permalink+'?good='+good+'&callback=?',
-		function(data) {
-			newsStory = getLines(data['story'], 170);
-			var val = data['value']/100;
-			if(good == 0){
-				val = -1*val;
-			}
-			selectedBubble.growth += val;
-		});
-	}
-}
-
-
 window.addEventListener('load', function() {
 	game = document.getElementById('game');
 	c = game.getContext('2d');
 	
-	game.addEventListener('mousedown', handleMouseDown);
-	game.addEventListener('mouseup', handleMouseUp);
-	game.addEventListener('mousemove', handleMove);
+	game.addEventListener('mousedown', handleMouseDown, false);
+	game.addEventListener('mouseup', handleMouseUp, false);
+	game.addEventListener('mousemove', handleMove, false);
 	
 	setup(6);
 	
@@ -686,4 +686,4 @@ window.addEventListener('load', function() {
 	turret = new Turret();
 	
 	loop();
-})
+}, false);
