@@ -117,7 +117,7 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 			c.lineWidth = 3;
 			
 			if(this.hover && this.invested>0) {
-				if(this.growth>0) {
+				if(this.gains-this.invested > this.invested) {
 					c.strokeStyle='rgba(126, 252, 122, 0.75)';
 					c.fillStyle='rgba(126, 252, 122, 0.5)'					
 				} else {
@@ -139,10 +139,10 @@ function Bubble(x, y, radius, worth, growth, goodchance, panicchance) {
 		
 			c.fillStyle = '#1E2B3F';
 			if(this.invested>0) {
-				if(this.gains > this.invested) {
-					var gainText = '+$'+((this.gains-this.invested)*100000).formatMoney(0, '.', ',');
+				if(this.gains-this.invested > this.invested) {
+					var gainText = '+$'+((this.gains-this.invested*2)*100000).formatMoney(0, '.', ',');
 				} else {
-					var gainText = '-$'+((this.invested-this.gains)*100000).formatMoney(0, '.', ',');
+					var gainText = '-$'+(1*((this.invested*2-this.gains)*100000)).formatMoney(0, '.', ',');
 				}
 				var gainDms = c.measureText(gainText);
 				c.fillText(gainText, this.x-(gainDms.width/2), this.y+20);
