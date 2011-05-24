@@ -1,6 +1,6 @@
 var w = 480;
 var h = 640;
-var maxh = 420;
+var maxh = 430;
 
 var game;
 var c;
@@ -209,6 +209,13 @@ function Turret() {
 	}
 	
 	this.draw = function() {
+		c.save();
+		c.fillStyle = "rgba(0, 0, 0, .2)";
+		for(var i=0; i<20; i++) {
+			c.fillRect(i*w/20+w/80, maxh, w/40, 1);			
+		}
+		c.restore();
+		
 		if(this.state == 2) {
 			if(this.counter == 0) {
 				this.state = 3;
@@ -309,16 +316,8 @@ function randomBubble() {
 /* MOUSE HANDLERS
 **************************************************************************************/
 function getCursorPosition(e) {
-	var x;
-	var y;
-
-	if(e.offsetX) {
-		x = e.offsetX;
-		y = e.offsetY;
-	} else if(e.layerX) {
-		x = e.layerX;
-		y = e.layerY;
-	}
+	var x = e.pageX - game.offsetLeft;
+	var y = e.pageY - game.offsetTop;
 
 	return new Pos(x, y);
 }
