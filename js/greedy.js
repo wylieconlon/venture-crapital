@@ -1,4 +1,4 @@
-var w = 480;
+ var w = 480;
 var h = 640;
 var maxh = 430;
 
@@ -25,6 +25,7 @@ var MIN_RADIUS = 10;
 var MAX_RADIUS = 90;
 
 var clicked = false;
+var hovering = false;
 
 var frames = 0;
 
@@ -201,7 +202,7 @@ function Turret() {
 	this.counter = 0;
 	
 	this.shooting = function() {
-		return !(this.state==1 || (this.state==3 && this.counter < 25));
+		return !(this.state==1 || (this.state==3 && this.counter < 15));
 	}
 	
 	this.draw = function() {
@@ -311,21 +312,25 @@ function getCursorPosition(e) {
 	return new Pos(x, y);
 }
 
-function startCashThrow() {
-	turret.state = 2;
-	turret.counter = 10;
-	sprite = sprite2;
+function startThrow() {
+	if(clicked && !hovering && !turret.shooting()) {
+		turret.state = 2;
+		turret.counter = 10;
+		sprite = sprite2;
+	}
 }
 function hoverOnBubble() {
 	for(var i=0; i<bubbles.length; i++) {
 		var b = bubbles[i];
 		if(b.isAlive && b.invested>0 && b.collidesWithPoint(mpos)) {
 			b.hover = true;
+			hovering = true;
 			return true;
 		} else {
 			b.hover = false;
 		}
 	}
+	hovering = false;
 	return false;
 }
 function clickedOnBubble() {
@@ -342,13 +347,12 @@ function clickedOnBubble() {
 	return false;
 }
 function handleMouseDown(e) {
+	clicked = true;
 	if(gameStarted) {
-		clicked = false;
-	
 		mpos = getCursorPosition(e);
 
 		if(!clickedOnBubble() && cash>0 && mpos.y<turret.y && !turret.shooting()) {
-			startCashThrow();
+			startThrow();
 		}
 	} else {
 		gameStarted = true;
@@ -367,7 +371,9 @@ function handleMove(e) {
 **************************************************************************************/
 function setup(n) {
 	for (var j = 0; j < n; j++) {
-		addBubble();
+		if(bubbles.length < MAX_BUBBLES) {
+			addBubble();
+		}
 	}
 }
 
@@ -421,7 +427,7 @@ function addBubble() {
 			goodchance = 0.4;
 			panicchange = 0.3;
 		}
-		if(radius != undefined) {
+		if(radius != undefined && bubbles.length<MAX_BUBBLES) {
 			var b = new Bubble(xPos, yPos, radius, worth, growth, goodchance, panicchance);
 			b.name = data['name'];
 			b.permalink = data['permalink'];
@@ -616,22 +622,24 @@ function draw() {
 	}
 }
 function update() {
-	for(var i=0; i<bubbles.length; i++) {
-		var bubble = bubbles[i];
-		bubble.update();
-		bubble.move();
-	}
-	
-	for(var i=0; i<bullets.length; i++) {
-		var bullet = bullets[i];
-		bullet.move();
-	}
-	
-	checkBounds();
-	
 	if(cash<=0) {
 		gameOver = true;
 		gameStarted = false;
+	} else {
+		for(var i=0; i<bubbles.length; i++) {
+			var bubble = bubbles[i];
+			bubble.update();
+			bubble.move();
+		}
+		
+		for(var i=0; i<bullets.length; i++) {
+			var bullet = bullets[i];
+			bullet.move();
+		}
+	
+		checkBounds();
+	
+		startThrow();
 	}
 }
 function loop() {
