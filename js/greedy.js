@@ -313,7 +313,7 @@ function getCursorPosition(e) {
 }
 
 function startThrow() {
-	if(clicked && !hovering && !turret.shooting()) {
+	if(!hovering && !turret.shooting()) {
 		turret.state = 2;
 		turret.counter = 10;
 		sprite = sprite2;
@@ -641,8 +641,6 @@ function update() {
 		}
 	
 		checkBounds();
-	
-		startThrow();
 	}
 }
 function loop() {
