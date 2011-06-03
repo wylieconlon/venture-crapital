@@ -357,6 +357,9 @@ function handleMouseDown(e) {
 	} else {
 		gameStarted = true;
 		gameOver = false;
+		
+		_gaq.push(['_trackEvent', 'Events', 'Start', 'Venture Crapital']);
+		
 		reset();
 	}
 }
